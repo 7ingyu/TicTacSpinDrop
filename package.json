@@ -1,0 +1,19 @@
+{
+  "name": "tictacspindrop",
+  "version": "1.0.0",
+  "description": "Tic Tac Toe with a twist",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/7ingyu/TicTacSpinDrop.git"
+  },
+  "author": "Ting-Yu Chen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/7ingyu/TicTacSpinDrop/issues"
+  },
+  "homepage": "https://github.com/7ingyu/TicTacSpinDrop#readme"
+}
