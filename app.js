@@ -1,3 +1,5 @@
+let x = '&#9587;';
+let o = '&#9711;';
 
 window.onload = function() {
   // *********************************************************** //
@@ -225,8 +227,8 @@ window.onload = function() {
 
   var updateTally = () => {
     let div = document.getElementById('tally')
-    div.innerHTML = `&nbsp;Games won by ${playerNames[1]} (X): ${wins[1]} <br>
-      &nbsp;Games won by ${playerNames[2]} (O): ${wins[2]}<br>`;
+    div.innerHTML = `&nbsp;Games won by ${playerNames[1]} (${x}): ${wins[1]} <br>
+      &nbsp;Games won by ${playerNames[2]} (${o}): ${wins[2]}<br>`;
   };
 
   var setupGame = () => {
@@ -274,13 +276,13 @@ window.onload = function() {
       div.innerHTML = '';
     }
 
-    let mark = 'X';
+    let mark = x;
     for (let player = 1; player <= 2; player++) {
       for (let square in plays[player]) {
         if (player === 1) {
-          mark = 'X';
+          mark = x;
         } else {
-          mark = 'O';
+          mark = o;
         }
         let div = document.getElementById(`text${square}`);
         div.innerHTML = mark;
@@ -321,7 +323,7 @@ window.onload = function() {
       } else {
         playerNames[1] = newName.toString();
       }
-      label.innerHTML = 'Please tell me who is playing as O: <br>';
+      label.innerHTML = `Please tell me who is playing as ${o}: <br>`;
       input.value = '';
     } else if (playerNames[2] === '') {
       if (newName == '') {
@@ -376,7 +378,7 @@ window.onload = function() {
 
   let label = document.createElement('label');
   label.setAttribute('for', 'playername');
-  label.innerHTML = 'Please tell me who is playing as X: <br>';
+  label.innerHTML = `Please tell me who is playing as ${x}: <br>`;
 
   let input = document.createElement('input')
   input.setAttribute('type', 'text');
