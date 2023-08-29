@@ -79,8 +79,14 @@ window.onload = function() {
 
   var endTurn = () => {
     if (gameWon(player)) {
-      document.getElementById('notifications').innerHTML = `${playerNames[player]} won!`;
+      if (gameWon(player === 1 ? 2 : 1)) {
+        document.getElementById('notifications').innerHTML = `It's a double win!`;
+      } else {
+        document.getElementById('notifications').innerHTML = `${playerNames[player]} won!`;
+      }
       freezeGame();
+    } else if (gameWon(player === 1 ? 2 : 1)) {
+      document.getElementById('notifications').innerHTML = `${playerNames[player === 1 ? 2 : 1]} won!`;
     } else {
       turn++
       if (turn === 10) {
@@ -88,7 +94,7 @@ window.onload = function() {
         document.getElementById('notifications').innerHTML = `<i>All squares filled. Game ends in a tie. Please reset.</i>`;
         freezeGame();
       } else {
-        player = (player === 1) ? 2: 1;
+        player = (player === 1) ? 2 : 1;
         notifications.innerHTML = `Turn ${turn}: ${playerNames[player]}'s turn`
         console.log(`It is now turn ${turn}, ${playerNames[player]}'s turn`);
       }
