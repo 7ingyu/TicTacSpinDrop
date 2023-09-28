@@ -1,25 +1,19 @@
 import { useEffect, useState } from 'react'
-import Toggle from '@/components/Toggle'
 import gsap from 'gsap';
+import Toggle from '@/components/Toggle'
 import checkBoard from '@/utils/checkBoard'
+import gameProps from '@/types/playerData'
 
-interface GameProps {
-  name: string
-}
-
-function Game ({ name }: GameProps)  {
+function Game ({ player, opponent }: gameProps)  {
   const x = '\u2573';
   const o = '\u25EF';
 
-  const [ loading, setLoading ] = useState<boolean>(true)
   const [ board, setBoard ] = useState<string[][]>([
     ['', '', ''],
     ['', '', ''],
     ['', '', ''],
   ])
-  const [ symbol, setSymbol ] = useState<string>('')
   const [ rotate, setRotate ] = useState<boolean>(false)
-  const [ opponent, setOpponent ] = useState<string>('')
   const [ score, setScore ] = useState<number[]>([0, 0])
   const [ started, setStarted ] = useState<boolean>(false)
   const [ freeze, setFreeze ] = useState<boolean>(true)
@@ -28,17 +22,20 @@ function Game ({ name }: GameProps)  {
 
   useEffect(() => {
     // Startup & connect to websocket
-    setLoading(false)
-    setSymbol(x)
-    setOpponent('tempName')
-    setFreeze(false)
-    setNotification('Your turn!')
+    if (import.meta.hot) {
+      import.meta.hot.on('tictac:player-move', data => {
+        console.log(data)
+      })
+    } else {
+      console.error('no import.meta.hot')
+    }
+
   }, [])
 
   const handleClick = (row: number, col: number) => {
     console.log(row, col, 'clicked')
     const newBoard = [...board]
-    newBoard[row][col] = symbol
+    newBoard[row][col] = player.symbol
     if (rotate) {
       setFreeze(true)
     } else {
@@ -64,7 +61,7 @@ function Game ({ name }: GameProps)  {
     if (!freeze && started) {
       console.log('timeline revert')
       timeline?.revert()
-      const [ win, lose ] = checkBoard(board, symbol)
+      const [ win, lose ] = checkBoard(board, player.symbol)
       if (win && lose) {
         setNotification("It's a tie!")
       } else if (win) {
@@ -79,7 +76,7 @@ function Game ({ name }: GameProps)  {
       }
       setTimeline(null)
     }
-  }, [board, freeze, timeline, symbol, started])
+  }, [board, freeze, timeline, player, started])
 
   useEffect(() => {
     const handleRotate = async () => {
@@ -153,8 +150,8 @@ function Game ({ name }: GameProps)  {
       </div>
 
       <div id="tally">
-        <div>Games won by {name} ({symbol}): {score[0]}</div>
-        <div>Games won by {opponent} ({symbol === x ? o : x}): {score[1]}</div>
+        <div>Games won by {player.name} ({player.symbol}): {score[0]}</div>
+        <div>Games won by {opponent.name} ({opponent.symbol}): {score[1]}</div>
       </div>
 
       <div id='board'>

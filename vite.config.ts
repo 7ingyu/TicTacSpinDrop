@@ -1,11 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import express from './express-plugin'
+import socket from './socket-plugin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), express('src/server')],
+  plugins: [react(), socket()],
   resolve: {
     alias: [
       { find: '@', replacement: path.resolve(__dirname, 'src') },
