@@ -45,8 +45,8 @@ function Game ({ player, opponent }: gameProps)  {
   const [ score, setScore ] = useState<number[]>([0, 0])
   const [ started, setStarted ] = useState<boolean>(false)
   const [ freeze, setFreeze ] = useState<boolean>(true)
-  const [ isTurn, setIsTurn ] = useState<boolean>(false);
-  const [ waitingForResults, setWaitingForResults ] = useState<boolean>(false);
+  const [ isTurn, setIsTurn ] = useState<boolean>(false)
+  const [ waitingForResults, setWaitingForResults ] = useState<boolean>(false)
   const [ serverResult, setServerResult ] = useState<serverResultShape | null>(null)
 
   const [ notification, setNotification ]
@@ -66,13 +66,14 @@ function Game ({ player, opponent }: gameProps)  {
         setServerResult(data)
         if (row && col) setCurrentMove([row, col])
         setRotate(rotatedMove || false)
-        setIsTurn(false)
       })
       import.meta.hot.on('tictac:new-game', (data: serverResultShape) => {
         console.log('resetting')
         setServerResult(data)
         setBoard(data.board)
         setNotification({type: NotificationActionKind.NEW, next: data.next})
+        setIsTurn(data.next === player.name)
+        setFreeze(data.next !== player.name)
       })
     } else {
       console.error('no import.meta.hot')
@@ -200,7 +201,7 @@ function Game ({ player, opponent }: gameProps)  {
           setToggle={setRotate}
         />
         <button className="buttons" onClick={handleReset}>
-          {freeze ? 'New Game' : 'Reset Game'}
+          {started ? 'Reset Game' : 'New Game'}
         </button>
       </div>
 
