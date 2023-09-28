@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useReducer } from 'react'
 import gsap from 'gsap';
 import Toggle from '@/components/Toggle'
 import checkBoard from '@/utils/checkBoard'
+import rotateBoard from '../utils/rotateBoard';
 import gameProps from '@/types/playerData'
+import { NotificationActionKind, NotificationState, notificationReducer } from '@/reducers/notifications';
 
 function Game ({ player, opponent }: gameProps)  {
   const x = '\u2573';
@@ -18,7 +20,9 @@ function Game ({ player, opponent }: gameProps)  {
   const [ started, setStarted ] = useState<boolean>(false)
   const [ freeze, setFreeze ] = useState<boolean>(true)
   const [ timeline, setTimeline ] = useState<gsap.core.Timeline | null>(null)
-  const [ notification, setNotification ] = useState<string>('')
+
+  const [ notification, setNotification ]
+    = useReducer<(state: NotificationState, action: NotificationActionKind) => NotificationState>(notificationReducer, { player, opponent, msg: '' });
 
   useEffect(() => {
     // Startup & connect to websocket
@@ -29,11 +33,18 @@ function Game ({ player, opponent }: gameProps)  {
     } else {
       console.error('no import.meta.hot')
     }
-
-  }, [])
+    if (player.symbol === x) {
+      setNotification(NotificationActionKind.GO)
+      setFreeze(false)
+    } else {
+      setNotification(NotificationActionKind.WAIT)
+      setFreeze(true)
+    }
+  }, [player])
 
   const handleClick = (row: number, col: number) => {
-    console.log(row, col, 'clicked')
+    // console.log(row, col, 'clicked')
+    setNotification(NotificationActionKind.TRANSITION)
     const newBoard = [...board]
     newBoard[row][col] = player.symbol
     if (rotate) {
@@ -42,7 +53,7 @@ function Game ({ player, opponent }: gameProps)  {
       setBoard(newBoard)
     }
     setStarted(true)
-    setNotification('')
+    setNotification(NotificationActionKind.TRANSITION)
   }
 
   const handleReset = () => {
@@ -63,11 +74,11 @@ function Game ({ player, opponent }: gameProps)  {
       timeline?.revert()
       const [ win, lose ] = checkBoard(board, player.symbol)
       if (win && lose) {
-        setNotification("It's a tie!")
+        setNotification(NotificationActionKind.TIE)
       } else if (win) {
-        setNotification('You win!')
+        setNotification(NotificationActionKind.WIN)
       } else if (lose) {
-        setNotification('You lose.')
+        setNotification(NotificationActionKind.LOSE)
       }
       if (win || lose) {
         setScore(s => [s[0] + Number(win), s[1] + Number(lose)])
@@ -80,57 +91,20 @@ function Game ({ player, opponent }: gameProps)  {
 
   useEffect(() => {
     const handleRotate = async () => {
-      const newBoard = [
-        [ board[2][0], board[1][0], board[0][0] ],
-        [ board[2][1], board[1][1], board[0][1] ],
-        [ board[2][2], board[1][2], board[0][2] ]
-      ]
       const tl = gsap.timeline()
       setTimeline(tl)
       tl.to('#board', {
         rotation: 90,
         duration: 0.5
       }).addLabel('rotate', 0).addLabel('drop', 0.5)
-      // console.log('rotated', newBoard)
-      // Drop squares
-      const squares = Array.from(document.querySelectorAll('[id^="square"]'))
-      // Corresponding square in newBoard
-      let row = 2
-      let col = 0
-      squares.reverse().forEach(({ id, textContent }) => {
-        // console.log(id, textContent)
-        const content = newBoard[row][col]
-        tl.to(`#${id}>div`, {
-          rotate: -90,
-        }, 'rotate')
-        if (textContent) {
-          let below = row + 1
-          let drops = 0
-          while (below <= 2) {
-            if (newBoard[below][col]) break
-            // console.log('checking', below, col)
-            drops ++
-            newBoard[below][col] = content
-            newBoard[below - 1][col] = ''
-            below ++
-          }
-          // console.log(drops, 'drops')
-          // console.log(newBoard)
-          tl.to(`#${id}>div`, {
-            translateX: `${110 * drops}px`,
-          }, 'drop')
-        }
-        // Get next corresponding newBoard square
-        row --
-        if (row < 0) {
-          row = 2
-          col ++
-        }
+      const { newBoard, drops } = rotateBoard(board)
+      drops.forEach(({row, col, distance}) => {
+        tl.to(`#square-${row}-${col}>div`, {
+          translateX: `${110 * distance}px`,
+        }, 'drop')
       })
       tl.play().then(() => {
-        // console.log('fin')
         setBoard(newBoard)
-        setFreeze(false)
       })
     }
     if (freeze && rotate && started) handleRotate()
@@ -169,7 +143,7 @@ function Game ({ player, opponent }: gameProps)  {
       </div>
 
       <div id="notifications">
-          {notification}
+          {notification?.msg}
       </div>
     </>
   )

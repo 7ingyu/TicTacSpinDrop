@@ -15,9 +15,23 @@ const App = () => {
 
   useEffect(() => {
     if (nameSaved && import.meta.hot) {
-      import.meta.hot.on('tictac:player-match', (data) => setPlayerData(data))
+      import.meta.hot.on('tictac:player-match', (data) => {
+        console.log('match found')
+        setPlayerData(data)
+      })
+      import.meta.hot.on('tictac:disconnected', (data) => {
+        console.log(data)
+        setPlayerData(null)
+      })
+      window.onbeforeunload = () => {
+        console.log('disconnect')
+        if (import.meta.hot) {
+          import.meta.hot.send('tictac:disconnect', { name })
+        }
+        return null
+      }
     }
-  }, [nameSaved])
+  }, [nameSaved, name])
 
 
   return (
