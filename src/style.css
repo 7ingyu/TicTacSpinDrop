@@ -23,8 +23,10 @@ input {
   height: 330px;
 }
 
-#board > div {
-  background-color: rgb(175, 175, 175);
+.board-square {
+  background-color: rgb(206, 206, 206);
+  border: none;
+  border-radius: 0;
   position: relative;
   width: 100px;
   height: 100px;
@@ -36,6 +38,7 @@ input {
 }
 
 .textbox {
+  font-weight: bold;
   position: relative;
   overflow: hidden;
   z-index: 10;
@@ -56,6 +59,10 @@ button {
   position: relative;
   padding: 0.25rem 0.5rem;
   /* left: 3px; */
+}
+
+button:not(:disabled) {
+  cursor: pointer;
 }
 
 #notifications {

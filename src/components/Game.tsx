@@ -212,15 +212,17 @@ function Game ({ player, opponent }: gameProps)  {
 
       <div id='board'>
         {board.map((row: string[], r: number) => row.map((str, c) => (
-          <div
+          <button
             id={`square-${r}-${c}`}
             key={`square-${r}-${c}`}
+            className='board-square'
+            disabled={freeze}
             onClick={!freeze ? () => handleClick(r, c) : () => {}}
           >
             <div className="textbox">
               {str}
             </div>
-          </div>
+          </button>
         )))}
       </div>
 
