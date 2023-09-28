@@ -6,19 +6,24 @@ enum NotificationActionKind {
   WIN = 'win',
   LOSE = 'lose',
   TIE = 'tie',
-  TRANSITION = 'transition'
+  TRANSITION = 'transition',
+  NEW = 'new'
 }
 
-// An interface for our state
+export interface NotificationActionShape {
+  type: NotificationActionKind
+  next: string | null
+}
+
 export interface NotificationState extends playerDataShape {
   msg: string;
 }
 
 const notificationReducer
-  = (state: NotificationState, action: NotificationActionKind)
+  = (state: NotificationState, action: NotificationActionShape )
   : NotificationState => {
-  // console.log(action)
-  switch (action) {
+
+  switch (action.type) {
     case NotificationActionKind.GO:
       return {...state, msg: "Your turn!"}
     case NotificationActionKind.WAIT:
@@ -31,6 +36,13 @@ const notificationReducer
       return {...state, msg: "It's a tie!"}
     case NotificationActionKind.TRANSITION:
       return {...state, msg: ''}
+    case NotificationActionKind.NEW:
+      return {...state, msg: `New game! It's ${action.next === state.player?.name
+        ? 'your turn!'
+        : (state.opponent?.name || 'Opponent') + '\'s turn.'
+      }`}
+    default:
+      return state
   }
 }
 

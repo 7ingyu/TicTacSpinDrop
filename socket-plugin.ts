@@ -92,7 +92,8 @@ export default function socketPlugin() {
             player_win: win,
             opponent_win: lose,
             player: { ...player, client: null },
-            opponent: { ...opponent, client: null }
+            opponent: { ...opponent, client: null },
+            next: opponent.name
           })
           opponent.client.send('tictac:opponent-move', {
             board: boards[player.game],
@@ -100,9 +101,35 @@ export default function socketPlugin() {
             player_win: lose,
             opponent_win: win,
             opponent: { ...player, opponent: null, client: null },
-            player: { ...opponent, opponent: null, client: null }
+            player: { ...opponent, opponent: null, client: null },
+            next: opponent.name
           })
         }
+      })
+
+      server.ws.on('tictac:reset', ({name: user}) => {
+        const player = players[user]
+        const opponent = player.opponent
+        boards[player.game] = [
+          ['', '', ''],
+          ['', '', ''],
+          ['', '', ''],
+        ]
+        player.moves = 0
+        opponent.moves = 0
+        const next = Math.random() >= 0.5 ? player.name : opponent.name
+        player.client.send('tictac:new-game', {
+          board: boards[player.game],
+          player: { ...player, client: null },
+          opponent: { ...opponent, client: null },
+          next
+        })
+        opponent.client.send('tictac:new-game', {
+          board: boards[player.game],
+          opponent: { ...player, opponent: null, client: null },
+          player: { ...opponent, opponent: null, client: null },
+          next
+        })
       })
 
       server.ws.on('tictac:disconnect', ({ name: user }) => {

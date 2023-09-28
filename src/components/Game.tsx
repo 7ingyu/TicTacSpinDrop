@@ -5,15 +5,15 @@ import Toggle from '@/components/Toggle'
 import checkBoard from '@/utils/checkBoard'
 import rotateBoard from '../utils/rotateBoard';
 import gameProps from '@/types/playerData'
-import { NotificationActionKind, NotificationState, notificationReducer } from '@/reducers/notifications';
+import { NotificationActionKind, NotificationState, NotificationActionShape, notificationReducer } from '@/reducers/notifications';
 
 interface serverResultShape {
   board: string[][]
-  row: number
-  col: number
-  rotate: boolean
-  player_win: boolean
-  opponent_win: boolean
+  row: number | null
+  col: number | null
+  rotate: boolean | null
+  player_win: boolean | null
+  opponent_win: boolean | null
   opponent: {
     name: string
     symbol: string
@@ -26,6 +26,7 @@ interface serverResultShape {
     moves: number
     wins: number
   }
+  next: string
 }
 
 function Game ({ player, opponent }: gameProps)  {
@@ -49,7 +50,7 @@ function Game ({ player, opponent }: gameProps)  {
   const [ serverResult, setServerResult ] = useState<serverResultShape | null>(null)
 
   const [ notification, setNotification ]
-    = useReducer<(state: NotificationState, action: NotificationActionKind) => NotificationState>(notificationReducer, { player, opponent, msg: '' });
+    = useReducer<(state: NotificationState, action: NotificationActionShape) => NotificationState>(notificationReducer, { player, opponent, msg: '' });
 
   useEffect(() => {
     // Startup & connect to websocket
@@ -63,19 +64,25 @@ function Game ({ player, opponent }: gameProps)  {
         console.log('opponent moved')
         const { row, col, rotate: rotatedMove } = data
         setServerResult(data)
-        setCurrentMove([row, col])
-        setRotate(rotatedMove)
+        if (row && col) setCurrentMove([row, col])
+        setRotate(rotatedMove || false)
         setIsTurn(false)
+      })
+      import.meta.hot.on('tictac:new-game', (data: serverResultShape) => {
+        console.log('resetting')
+        setServerResult(data)
+        setBoard(data.board)
+        setNotification({type: NotificationActionKind.NEW, next: data.next})
       })
     } else {
       console.error('no import.meta.hot')
     }
     if (player.symbol === x) {
-      setNotification(NotificationActionKind.GO)
+      setNotification({type: NotificationActionKind.GO})
       setIsTurn(true)
       setFreeze(false)
     } else {
-      setNotification(NotificationActionKind.WAIT)
+      setNotification({type: NotificationActionKind.WAIT})
       setIsTurn(false)
       setFreeze(true)
     }
@@ -89,10 +96,8 @@ function Game ({ player, opponent }: gameProps)  {
   const endMove = () => {
     console.log('ending move')
     setTimeline(null)
-    setFreeze(isTurn)
-    setNotification(isTurn ? NotificationActionKind.WAIT: NotificationActionKind.GO)
+    setNotification({type: isTurn ? NotificationActionKind.WAIT: NotificationActionKind.GO})
     setStarted(true)
-    setIsTurn(!isTurn)
     setCurrentMove(null)
     setRotating(false)
   }
@@ -100,7 +105,7 @@ function Game ({ player, opponent }: gameProps)  {
   useEffect(() => {
     if (currentMove) {
       const [row, col] = currentMove
-      setNotification(NotificationActionKind.TRANSITION)
+      setNotification({type: NotificationActionKind.TRANSITION})
       const newBoard = [...board]
       newBoard[row][col] = isTurn ? player.symbol: opponent.symbol
       if (isTurn && import.meta.hot) {
@@ -121,14 +126,11 @@ function Game ({ player, opponent }: gameProps)  {
   }, [currentMove])
 
   const handleReset = () => {
-    setBoard([
-      ['', '', ''],
-      ['', '', ''],
-      ['', '', ''],
-    ])
-    setFreeze(false)
-    setStarted(false)
-    setNotification('Your turn!')
+    console.log('reset req')
+    if (import.meta.hot) {
+      import.meta.hot.send('tictac:reset', player)
+    }
+    setServerResult(null)
   }
 
   useEffect(() => {
@@ -167,6 +169,19 @@ function Game ({ player, opponent }: gameProps)  {
       if (JSON.stringify(serverResult.board) !== JSON.stringify(board)) {
         console.log('board mismatch!')
         setBoard(serverResult.board)
+      }
+      setFreeze(serverResult.next !== player.name)
+      setIsTurn(serverResult.next === player.name)
+      if (serverResult.player_win || serverResult.opponent_win) {
+        setFreeze(true)
+        setStarted(false)
+        if (serverResult.player_win && serverResult.opponent_win) {
+          setNotification({type: NotificationActionKind.TIE})
+        } else if (serverResult.player_win) {
+          setNotification({type: NotificationActionKind.WIN})
+        } else if (serverResult.opponent_win) {
+          setNotification({type: NotificationActionKind.LOSE})
+        }
       }
     }
     if (serverResult && !rotating && !waitingForResults && !currentMove) checkAgainstServer()
