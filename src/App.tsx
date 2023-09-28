@@ -14,7 +14,7 @@ const App = () => {
   const [ playerData, setPlayerData ] = useState<playerDataShape | null>(null)
 
   useEffect(() => {
-    if (nameSaved && import.meta.hot) {
+    if (import.meta.hot) {
       import.meta.hot.on('tictac:player-match', (data) => {
         console.log('match found')
         setPlayerData(data)
@@ -23,6 +23,8 @@ const App = () => {
         console.log(data)
         setPlayerData(null)
       })
+    }
+    if (nameSaved) {
       window.onbeforeunload = () => {
         console.log('disconnect')
         if (import.meta.hot) {
