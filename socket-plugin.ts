@@ -1,3 +1,5 @@
+import { rotateBoard, checkBoard } from './src/utils'
+
 export default function socketPlugin() {
 
   return {
@@ -43,21 +45,64 @@ export default function socketPlugin() {
             ...newPlayer,
             opponent: opponent,
             symbol: o,
-            game: boards[newPlayer.name + opponent.name]
+            game: newPlayer.name + opponent.name,
+            moves: 0,
+            wins: 0
           }
           players[opponent.name] = {
             ... opponent,
             opponent: newPlayer,
             symbol: x,
-            game: boards[newPlayer.name + opponent.name]
+            game: newPlayer.name + opponent.name,
+            moves: 0,
+            wins: 0
           }
         } else {
           queue.push(newPlayer)
         }
       })
 
-      server.ws.on('tictac:move', (data) => {
-        console.log(data)
+      server.ws.on('tictac:move', ({ name, symbol, square: [ row, col ], rotate }) => {
+        players[name].moves ++
+        const player = players[name]
+        const opponent = players[player.opponent.name]
+        const board = boards[player.game]
+        // Invalid move if already have something at square or too many consecutive moves
+        if (board[row][col] || Math.abs(opponent.moves - player.moves) >= 2) {
+          players[name].moves --
+          player.client.send('tictac:invalid-move', { board })
+        } else {
+          console.log(board)
+          board[row][col] = symbol
+          if (rotate) {
+            const { newBoard } = rotateBoard(board)
+            boards[player.game] = newBoard
+            if (boards[player.game] != boards[opponent.game]) console.log('board mismatch!')
+          }
+          console.log('checkBoard', boards[player.game])
+          let win, lose = false
+          if (player.moves >= 3) {
+            [win, lose] = checkBoard(boards[player.game], symbol)
+            if (win) player.wins ++
+            if (lose) opponent.wins ++
+          }
+          player.client.send('tictac:move-result', {
+            board: boards[player.game],
+            row, col, rotate,
+            player_win: win,
+            opponent_win: lose,
+            player: { ...player, client: null },
+            opponent: { ...opponent, client: null }
+          })
+          opponent.client.send('tictac:opponent-move', {
+            board: boards[player.game],
+            row, col, rotate,
+            player_win: lose,
+            opponent_win: win,
+            opponent: { ...player, opponent: null, client: null },
+            player: { ...opponent, opponent: null, client: null }
+          })
+        }
       })
 
       server.ws.on('tictac:disconnect', ({ name: user }) => {

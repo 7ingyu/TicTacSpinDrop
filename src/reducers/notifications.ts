@@ -17,7 +17,7 @@ export interface NotificationState extends playerDataShape {
 const notificationReducer
   = (state: NotificationState, action: NotificationActionKind)
   : NotificationState => {
-  console.log(action)
+  // console.log(action)
   switch (action) {
     case NotificationActionKind.GO:
       return {...state, msg: "Your turn!"}

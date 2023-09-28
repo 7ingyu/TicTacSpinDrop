@@ -8,6 +8,7 @@ interface rotateReturn {
 }
 
 const rotateBoard = (board: string[][]) : rotateReturn => {
+  console.log('calculating rotate')
   const newBoard = [
     [ board[2][0], board[1][0], board[0][0] ],
     [ board[2][1], board[1][1], board[0][1] ],
@@ -47,44 +48,9 @@ const rotateBoard = (board: string[][]) : rotateReturn => {
     }
   }
 
+  console.log('original', board)
+  console.log('rotated', newBoard)
   return { newBoard, drops }
 }
 
 export default rotateBoard
-
-// const squares = Array.from(document.querySelectorAll('[id^="square"]'))
-// // Corresponding square in newBoard
-// let row = 2
-// let col = 0
-// squares.reverse().forEach(({ id, textContent }) => {
-//   // console.log(id, textContent)
-//   const content = newBoard[row][col]
-//   if (textContent) {
-//     let below = row + 1
-//     let drops = 0
-//     while (below <= 2) {
-//       if (newBoard[below][col]) break
-//       // console.log('checking', below, col)
-//       drops ++
-//       newBoard[below][col] = content
-//       newBoard[below - 1][col] = ''
-//       below ++
-//     }
-//     // console.log(drops, 'drops')
-//     // console.log(newBoard)
-//     tl.to(`#${id}>div`, {
-//       translateX: `${110 * drops}px`,
-//     }, 'drop')
-//   }
-//   // Get next corresponding newBoard square
-//   row --
-//   if (row < 0) {
-//     row = 2
-//     col ++
-//   }
-// })
-// tl.play().then(() => {
-//   // console.log('fin')
-//   setBoard(newBoard)
-//   setFreeze(false)
-// })

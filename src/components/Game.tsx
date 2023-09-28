@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useReducer } from 'react'
 import gsap from 'gsap';
 import Toggle from '@/components/Toggle'
@@ -5,6 +6,27 @@ import checkBoard from '@/utils/checkBoard'
 import rotateBoard from '../utils/rotateBoard';
 import gameProps from '@/types/playerData'
 import { NotificationActionKind, NotificationState, notificationReducer } from '@/reducers/notifications';
+
+interface serverResultShape {
+  board: string[][]
+  row: number
+  col: number
+  rotate: boolean
+  player_win: boolean
+  opponent_win: boolean
+  opponent: {
+    name: string
+    symbol: string
+    moves: number
+    wins: number
+  }
+  player: {
+    name: string
+    symbol: string
+    moves: number
+    wins: number
+  }
+}
 
 function Game ({ player, opponent }: gameProps)  {
   const x = '\u2573';
@@ -16,10 +38,15 @@ function Game ({ player, opponent }: gameProps)  {
     ['', '', ''],
   ])
   const [ rotate, setRotate ] = useState<boolean>(false)
+  const [ rotating, setRotating ] = useState<boolean>(false)
+  const [ currentMove, setCurrentMove ] = useState<number[] | null>(null)
+  const [ timeline, setTimeline ] = useState<gsap.core.Timeline | null>(null)
   const [ score, setScore ] = useState<number[]>([0, 0])
   const [ started, setStarted ] = useState<boolean>(false)
   const [ freeze, setFreeze ] = useState<boolean>(true)
-  const [ timeline, setTimeline ] = useState<gsap.core.Timeline | null>(null)
+  const [ isTurn, setIsTurn ] = useState<boolean>(false);
+  const [ waitingForResults, setWaitingForResults ] = useState<boolean>(false);
+  const [ serverResult, setServerResult ] = useState<serverResultShape | null>(null)
 
   const [ notification, setNotification ]
     = useReducer<(state: NotificationState, action: NotificationActionKind) => NotificationState>(notificationReducer, { player, opponent, msg: '' });
@@ -27,34 +54,71 @@ function Game ({ player, opponent }: gameProps)  {
   useEffect(() => {
     // Startup & connect to websocket
     if (import.meta.hot) {
-      import.meta.hot.on('tictac:player-move', data => {
-        console.log(data)
+      import.meta.hot.on('tictac:move-result', (data: serverResultShape) => {
+        console.log('got move results')
+        setWaitingForResults(false)
+        setServerResult(data)
+      })
+      import.meta.hot.on('tictac:opponent-move', (data: serverResultShape) => {
+        console.log('opponent moved')
+        const { row, col, rotate: rotatedMove } = data
+        setServerResult(data)
+        setCurrentMove([row, col])
+        setRotate(rotatedMove)
+        setIsTurn(false)
       })
     } else {
       console.error('no import.meta.hot')
     }
     if (player.symbol === x) {
       setNotification(NotificationActionKind.GO)
+      setIsTurn(true)
       setFreeze(false)
     } else {
       setNotification(NotificationActionKind.WAIT)
+      setIsTurn(false)
       setFreeze(true)
     }
   }, [player])
 
   const handleClick = (row: number, col: number) => {
+    setCurrentMove([row, col])
     // console.log(row, col, 'clicked')
-    setNotification(NotificationActionKind.TRANSITION)
-    const newBoard = [...board]
-    newBoard[row][col] = player.symbol
-    if (rotate) {
-      setFreeze(true)
-    } else {
-      setBoard(newBoard)
-    }
-    setStarted(true)
-    setNotification(NotificationActionKind.TRANSITION)
   }
+
+  const endMove = () => {
+    console.log('ending move')
+    setTimeline(null)
+    setFreeze(isTurn)
+    setNotification(isTurn ? NotificationActionKind.WAIT: NotificationActionKind.GO)
+    setStarted(true)
+    setIsTurn(!isTurn)
+    setCurrentMove(null)
+    setRotating(false)
+  }
+
+  useEffect(() => {
+    if (currentMove) {
+      const [row, col] = currentMove
+      setNotification(NotificationActionKind.TRANSITION)
+      const newBoard = [...board]
+      newBoard[row][col] = isTurn ? player.symbol: opponent.symbol
+      if (isTurn && import.meta.hot) {
+        import.meta.hot.send('tictac:move', {
+          ... player,
+          square: [row, col],
+          rotate
+        })
+        setWaitingForResults(true)
+      }
+      if (!rotate) {
+        setBoard(newBoard)
+        endMove()
+      } else {
+        setRotating(true)
+      }
+    }
+  }, [currentMove])
 
   const handleReset = () => {
     setBoard([
@@ -67,32 +131,11 @@ function Game ({ player, opponent }: gameProps)  {
     setNotification('Your turn!')
   }
 
-
   useEffect(() => {
-    if (!freeze && started) {
-      console.log('timeline revert')
-      timeline?.revert()
-      const [ win, lose ] = checkBoard(board, player.symbol)
-      if (win && lose) {
-        setNotification(NotificationActionKind.TIE)
-      } else if (win) {
-        setNotification(NotificationActionKind.WIN)
-      } else if (lose) {
-        setNotification(NotificationActionKind.LOSE)
-      }
-      if (win || lose) {
-        setScore(s => [s[0] + Number(win), s[1] + Number(lose)])
-        setFreeze(true)
-        setStarted(false)
-      }
-      setTimeline(null)
-    }
-  }, [board, freeze, timeline, player, started])
-
-  useEffect(() => {
-    const handleRotate = async () => {
+    // Animate Rotation
+    if (rotating) {
+      console.log('animting rotate')
       const tl = gsap.timeline()
-      setTimeline(tl)
       tl.to('#board', {
         rotation: 90,
         duration: 0.5
@@ -100,15 +143,38 @@ function Game ({ player, opponent }: gameProps)  {
       const { newBoard, drops } = rotateBoard(board)
       drops.forEach(({row, col, distance}) => {
         tl.to(`#square-${row}-${col}>div`, {
+          rotation: -90,
+        }, 'rotate')
+        tl.to(`#square-${row}-${col}>div`, {
           translateX: `${110 * distance}px`,
         }, 'drop')
       })
       tl.play().then(() => {
         setBoard(newBoard)
+        endMove()
+        setTimeline(tl)
       })
     }
-    if (freeze && rotate && started) handleRotate()
-  }, [board, freeze, rotate, started])
+  }, [rotating])
+
+  useEffect(() => {
+    const checkAgainstServer = () => {
+      if (!serverResult) return
+      console.log('checking against server data')
+      console.log('server', serverResult.board)
+      console.log('local', board)
+      setScore([serverResult.player.wins, serverResult.opponent.wins])
+      if (JSON.stringify(serverResult.board) !== JSON.stringify(board)) {
+        console.log('board mismatch!')
+        setBoard(serverResult.board)
+      }
+    }
+    if (serverResult && !rotating && !waitingForResults && !currentMove) checkAgainstServer()
+    if (timeline) {
+      console.log('revert')
+      timeline.revert()
+    }
+  }, [rotating, serverResult, board, waitingForResults, currentMove, timeline])
 
   return (
     <>
