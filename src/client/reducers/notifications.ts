@@ -1,4 +1,4 @@
-import playerDataShape from "../types/playerData";
+import { playerDataShape } from "../types";
 
 enum NotificationActionKind {
   GO = 'go',
@@ -12,7 +12,7 @@ enum NotificationActionKind {
 
 export interface NotificationActionShape {
   type: NotificationActionKind
-  next: string | null
+  next?: string | undefined
 }
 
 export interface NotificationState extends playerDataShape {

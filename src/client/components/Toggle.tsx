@@ -2,8 +2,8 @@ interface ToggleProps {
   label: string
   toggle: boolean
   setToggle: React.Dispatch<React.SetStateAction<boolean>>
-  left: string
-  right: string
+  left?: string
+  right?: string
 }
 
 const Toggle = ({ label, toggle, setToggle, left = '', right = '' }: ToggleProps) => (

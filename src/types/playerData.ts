@@ -1,10 +1,10 @@
-export default interface playerDataShape {
+export interface playerDataShape {
   player: {
     name: string
     symbol: string
-  } | null
+  }
   opponent: {
     name: string
     symbol: string
-  } | null
+  }
 }

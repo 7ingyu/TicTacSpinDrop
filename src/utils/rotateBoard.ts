@@ -1,5 +1,7 @@
-interface rotateReturn {
-  newBoard: string[][]
+import { boardShape } from '@/types'
+
+export interface rotateReturn {
+  newBoard: boardShape
   drops: {
     row: number
     col: number
@@ -7,9 +9,9 @@ interface rotateReturn {
   }[]
 }
 
-const rotateBoard = (board: string[][]) : rotateReturn => {
-  console.log('calculating rotate')
-  const newBoard = [
+const rotateBoard = (board: boardShape) : rotateReturn => {
+  // console.log('calculating rotate')
+  const newBoard: boardShape = [
     [ board[2][0], board[1][0], board[0][0] ],
     [ board[2][1], board[1][1], board[0][1] ],
     [ board[2][2], board[1][2], board[0][2] ]
@@ -22,14 +24,14 @@ const rotateBoard = (board: string[][]) : rotateReturn => {
 
   // console.log('rotated', newBoard)
   // Drop squares
-  let row = 2
-  let col = 1
+  let row: number = 2
+  let col: number = 1
   for (let r = 1; r >= 0 ; r--) {
     for (let c = 0; c < 3; c++) {
-      const content = newBoard[r][c]
+      const content: string = newBoard[r][c]
       if (content) {
-        let below = r + 1
-        let distance = 0
+        let below: number = r + 1
+        let distance: number = 0
         while (below <= 2) {
           if (newBoard[below][c]) break
           distance ++
@@ -48,8 +50,8 @@ const rotateBoard = (board: string[][]) : rotateReturn => {
     }
   }
 
-  console.log('original', board)
-  console.log('rotated', newBoard)
+  // console.log('original', board)
+  // console.log('rotated', newBoard)
   return { newBoard, drops }
 }
 

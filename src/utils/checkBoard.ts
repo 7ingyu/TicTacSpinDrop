@@ -1,6 +1,6 @@
 const checkBoard = (board: string[][], symbol: string) => {
   console.log('checking score')
-  const winCombos = [
+  const winCombos: [number, number, number][] = [
     // Columns
     [0, 1, 2],
     [3, 4, 5],

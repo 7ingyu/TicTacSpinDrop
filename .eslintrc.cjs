@@ -15,4 +15,19 @@ module.exports = {
       { allowConstantExport: true },
     ],
   },
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.vue', '.ts', '.d.ts'],
+      },
+      alias: {
+        extensions: ['.vue', '.js', '.ts', '.scss', '.d.ts'],
+        map: [
+          ['@/components', './src/components'],
+          ['@/types', './src/types'],
+          ['@/utils', './src/utils'],
+        ],
+      },
+    },
+},
 }

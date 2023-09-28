@@ -3,9 +3,8 @@ import { useEffect, useState } from 'react'
 // import viteLogo from '/vite.svg'
 // import './App.css'
 
-import Login from '@/components/Login'
-import Game from '@/components/Game'
-import playerDataShape from '@/types/playerData'
+import { Login, Game } from '@/client/components'
+import { playerDataShape } from '@/types'
 
 const App = () => {
 
