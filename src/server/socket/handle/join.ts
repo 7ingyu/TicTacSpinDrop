@@ -5,7 +5,7 @@ import { joinData, playerData, privateGameData } from '../../../types/socket'
 
 const join = ({ name, game = '', socket }: joinData) => {
 
-  console.log(name, 'trying to join', game)
+  // console.log(name, 'trying to join', game)
   const player_a: playerData = { name, socket: socket.id }
 
   try {
@@ -19,8 +19,8 @@ const join = ({ name, game = '', socket }: joinData) => {
     if (num_games > 100) throw 'Too many games going'
 
     // Determine room/game ID
-    const game_id: string = socket.id
-    const game: privateGameData = {
+    const game_id: string = game || socket.id
+    const gameData: privateGameData = {
       id: game_id,
       next: x,
       board: [
@@ -45,13 +45,13 @@ const join = ({ name, game = '', socket }: joinData) => {
     players[player_a.socket] = player_b
     players[player_b.socket] = player_a
     // Save game state
-    games[game_id] = game
+    games[game_id] = gameData
     // Join room
     socket.join(game_id)
     socket_b.join(game_id)
 
     // Emit data to both players
-    sendDataToPlayers('new-game', game)
+    sendDataToPlayers('new-game', gameData)
   } catch (e) {
     console.log(e)
     handleQueue({ name, socket })

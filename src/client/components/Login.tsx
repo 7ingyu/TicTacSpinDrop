@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react"
+import { socket } from '@/client/socket';
 
 interface LoginProps {
   name: string
@@ -8,26 +9,40 @@ interface LoginProps {
 
 function Login ({ name, setName, handleSubmit }: LoginProps) {
 
-  const [ loading, setLoading ] = useState<boolean>(true)
+  const [ loading, setLoading ] = useState<boolean>(false)
   const [ error, setError ] = useState<string>('')
 
   useEffect(() => {
-    if (import.meta.hot) {
-      import.meta.hot.on('tictac:player-reg-ok', ({ msg }) => {
-        console.log(msg)
-        handleSubmit()
-      })
-      import.meta.hot.on('tictac:player-reg-fail', ({ error }) => {
-        setError(error)
-      })
+    // const onRegSuccess = (_, res) => {
+    //   console.log('reg success')
+    //   handleSubmit()
+    //   setLoading(false)
+    //   res("ack")
+    // }
+    // const onRegFail = ({ error }) => {
+    //   setError(error)
+    //   setLoading(false)
+    // }
+    const onConnect = () => {
+      console.log('reg success')
+      handleSubmit()
       setLoading(false)
     }
+    // socket.on('reg-success', onRegSuccess)
+    // socket.on('reg-fail', onRegFail)
+    socket.on('connect', onConnect)
+
+    return () => {
+      // socket.off('reg-success', onRegSuccess)
+      // socket.off('reg-fail', onRegFail)
+      socket.off('connect', onConnect)
+    };
   }, [handleSubmit])
 
   const handleEnter = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!import.meta.hot) return
-    import.meta.hot.send('tictac:new-player', { name })
+    console.log('connecting...')
+    socket.connect()
     setLoading(true)
   }
 
@@ -50,5 +65,3 @@ function Login ({ name, setName, handleSubmit }: LoginProps) {
 }
 
   export default Login
-
-

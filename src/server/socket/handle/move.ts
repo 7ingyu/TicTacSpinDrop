@@ -1,21 +1,16 @@
 import { Socket } from "socket.io"
 import { checkBoard, rotateBoard } from "../../../utils"
-import { privateGameData } from "../../../types/socket"
+import { moveData } from "../../../types/socket"
 import { games } from "../state"
 import { boardShape } from "@/types"
 import { getPlayers, sendDataToPlayers } from "."
 
-interface moveData extends privateGameData {
-  game_id: string
-  player_id: string
-  row: number
-  col: number
-  rotate: boolean
+interface MoveArgs extends moveData {
   socket: Socket
 }
 
-const move = ({ game_id, row, col, rotate, player_id, socket }: moveData) => {
-  console.log('new-move', game_id, row, col, rotate, player_id)
+const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
+  // console.log('new-move', game_id, row, col, rotate, player_id)
   // Get saved data
   const gameData = games[game_id]
   console.log('in-memory', gameData)

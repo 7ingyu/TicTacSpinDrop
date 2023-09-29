@@ -6,5 +6,7 @@ export {
   type playerState,
   type publicPlayer,
   type privateGameData,
-  type publicGameData
+  type publicGameData,
+  type moveData,
+  type movedData
 } from './socket'

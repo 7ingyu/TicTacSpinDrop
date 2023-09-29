@@ -1,57 +1,34 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useReducer } from 'react'
 import gsap from 'gsap';
 import { Toggle } from '@/client/components'
 import { rotateBoard } from '@/utils';
-import { playerDataShape as gameProps, boardShape } from '@/types'
+import { publicGameData, movedData, boardShape, moveData } from '@/types'
 import {
   NotificationActionKind,
   NotificationState,
   NotificationActionShape,
   notificationReducer
 } from '@/client/reducers/notifications';
+import { socket } from '@/client/socket';
 
-interface serverResultShape {
-  board: boardShape
-  row: number | null
-  col: number | null
-  rotate: boolean | null
-  player_win: boolean | null
-  opponent_win: boolean | null
-  opponent: {
-    name: string
-    symbol: string
-    moves: number
-    wins: number
-  }
-  player: {
-    name: string
-    symbol: string
-    moves: number
-    wins: number
-  }
-  next: string
+interface gameProps extends publicGameData {
+  playerId: string
 }
 
-function Game ({ player, opponent }: gameProps)  {
-  const x = '\u2573';
-  // const o = '\u25EF';
+function Game ({ id, next: first, board, player, opponent, playerId }: gameProps)  {
 
-  const [ board, setBoard ] = useState<boardShape>([
-    ['', '', ''],
-    ['', '', ''],
-    ['', '', ''],
-  ])
+  const [ displayBoard, setDisplayBoard ] = useState<boardShape>(board)
   const [ rotate, setRotate ] = useState<boolean>(false)
   const [ rotating, setRotating ] = useState<boolean>(false)
-  const [ currentMove, setCurrentMove ] = useState<number[] | null>(null)
   const [ timeline, setTimeline ] = useState<gsap.core.Timeline | null>(null)
-  const [ score, setScore ] = useState<number[]>([0, 0])
+  const [ score, setScore ] = useState<number[]>([player.wins, opponent.wins])
   const [ started, setStarted ] = useState<boolean>(false)
   const [ freeze, setFreeze ] = useState<boolean>(true)
-  const [ isTurn, setIsTurn ] = useState<boolean>(false)
-  const [ waitingForResults, setWaitingForResults ] = useState<boolean>(false)
-  const [ serverResult, setServerResult ] = useState<serverResultShape | null>(null)
+  const [ isTurn, setIsTurn ] = useState<boolean>(first === player.symbol)
+  const [ isLoading, setIsLoading ] = useState<boolean>(false)
+  const [ moved, setMoved ] = useState<publicGameData>({
+    id, next: first, board, player, opponent
+  })
 
   const [ notification, setNotification ]
     = useReducer<(
@@ -59,33 +36,55 @@ function Game ({ player, opponent }: gameProps)  {
       action: NotificationActionShape
     ) => NotificationState>(notificationReducer, { player, opponent, msg: '' });
 
-  useEffect(() => {
-    // Startup & connect to websocket
-    if (import.meta.hot) {
-      import.meta.hot.on('tictac:move-result', (data: serverResultShape) => {
-        // console.log('got move results')
-        setWaitingForResults(false)
-        setServerResult(data)
-      })
-      import.meta.hot.on('tictac:opponent-move', (data: serverResultShape) => {
-        // console.log('opponent moved')
-        const { row, col, rotate: rotatedMove } = data
-        setServerResult(data)
-        if (row && col) setCurrentMove([row, col])
-        setRotate(rotatedMove || false)
-      })
-      import.meta.hot.on('tictac:new-game', (data: serverResultShape) => {
-        // console.log('resetting')
-        setServerResult(data)
-        setBoard(data.board)
-        setNotification({type: NotificationActionKind.NEW, next: data.next})
-        setIsTurn(data.next === player.name)
-        setFreeze(data.next !== player.name)
-      })
-    } else {
-      console.error('no import.meta.hot')
+  const handleClick = (row: number, col: number) => {
+    const body: moveData = {
+      row, col, rotate, game_id: id, player_id: playerId
     }
-    if (player.symbol === x) {
+    socket.emit('move', body)
+    setIsLoading(true)
+    setFreeze(true)
+    console.log(row, col, 'clicked')
+  }
+
+  const handleReset = () => {
+    console.log('reset req')
+    socket.emit('reset')
+    setFreeze(true)
+  }
+
+  const endMove = () => {
+    console.log('ending move')
+
+    // Straighten out drop rotation
+    timeline?.revert()
+
+    // Check winnings and record score
+    let win, lose = false
+    const [ currentPlayerScore, currentOppScore ] = score
+    if (moved.player.wins > currentPlayerScore) win = true
+    if (moved.opponent.wins > currentOppScore) lose = true
+    if (win && lose) {
+      setNotification({type: NotificationActionKind.TIE})
+    } else if (win) {
+      setNotification({type: NotificationActionKind.WIN})
+    } else if (lose) {
+      setNotification({type: NotificationActionKind.LOSE})
+    }
+    setScore([moved.player.wins, moved.opponent.wins])
+
+    // Freeze if game over
+    setFreeze(win || lose ? true : !isTurn)
+
+    // Setup for next move
+    setTimeline(null)
+    setNotification({type: isTurn ? NotificationActionKind.GO : NotificationActionKind.WAIT})
+    setStarted(true)
+    setRotating(false)
+  }
+
+  useEffect(() => {
+    // Start game
+    if (player.symbol === first) {
       setNotification({type: NotificationActionKind.GO})
       setIsTurn(true)
       setFreeze(false)
@@ -94,113 +93,79 @@ function Game ({ player, opponent }: gameProps)  {
       setIsTurn(false)
       setFreeze(true)
     }
-  }, [player])
 
-  const handleClick = (row: number, col: number) => {
-    setCurrentMove([row, col])
-    // console.log(row, col, 'clicked')
-  }
+    const onMoved = (data: movedData) => {
+      console.log('onMoved')
+      // If opponent just moved
+      if (data.next === player.symbol) {
+        setFreeze(true)
+        setRotate(rotate)
+        setIsTurn(true)
+      } else {
+        setIsTurn(false)
+      }
+      setMoved(data)
+      setIsLoading(false)
+    }
 
-  const endMove = () => {
-    // console.log('ending move')
-    setTimeline(null)
-    setNotification({type: isTurn ? NotificationActionKind.WAIT: NotificationActionKind.GO})
-    setStarted(true)
-    setCurrentMove(null)
-    setRotating(false)
-  }
+    socket.on('moved', onMoved)
+
+    return () => {
+      socket.off('moved', onMoved)
+    }
+  }, [id])
 
   useEffect(() => {
-    if (currentMove) {
-      const [row, col] = currentMove
+    if (moved.row && moved.col) {
       setNotification({type: NotificationActionKind.TRANSITION})
-      const newBoard: boardShape = [...board]
-      newBoard[row][col] = isTurn ? player.symbol: opponent.symbol
-      if (isTurn && import.meta.hot) {
-        import.meta.hot.send('tictac:move', {
-          ... player,
-          square: [row, col],
-          rotate
-        })
-        setWaitingForResults(true)
-      }
-      if (!rotate) {
-        setBoard(newBoard)
+      if (!moved.rotate) {
+        // No rotation = no animation
+        setDisplayBoard(moved.board)
         endMove()
       } else {
+        // trigger rotation
         setRotating(true)
       }
     }
-  }, [currentMove])
-
-  const handleReset = () => {
-    // console.log('reset req')
-    if (import.meta.hot) {
-      import.meta.hot.send('tictac:reset', player)
-    }
-    setServerResult(null)
-  }
+  }, [moved])
 
   useEffect(() => {
     // Animate Rotation
     if (rotating) {
-      // console.log('animting rotate')
+      console.log('animating rotate')
+
+      // Create timeline
       const tl = gsap.timeline()
+      // Add board rotation to tl
       tl.to('#board', {
         rotation: 90,
         duration: 0.5
       }).addLabel('rotate', 0).addLabel('drop', 0.5)
-      const { newBoard, drops } = rotateBoard(board)
+
+      // Calculate drops and add to tl
+      const { drops } = rotateBoard(displayBoard)
       drops.forEach(({row, col, distance}) => {
+        // Add initial square rotation for smoother transition
         tl.to(`#square-${row}-${col}>div`, {
           rotation: -90,
         }, 'rotate')
+        // Add square drops to tl
         tl.to(`#square-${row}-${col}>div`, {
           translateX: `${110 * distance}px`,
         }, 'drop')
       })
+
+      // Trigger animation
       tl.play().then(() => {
-        setBoard(newBoard)
+        setDisplayBoard(moved.board)
         endMove()
         setTimeline(tl)
       })
     }
   }, [rotating])
 
-  useEffect(() => {
-    const checkAgainstServer = () => {
-      if (!serverResult) return
-      // console.log('checking against server data')
-      // console.log('server', serverResult.board)
-      // console.log('local', board)
-      setScore([serverResult.player.wins, serverResult.opponent.wins])
-      if (JSON.stringify(serverResult.board) !== JSON.stringify(board)) {
-        // console.log('board mismatch!')
-        setBoard(serverResult.board)
-      }
-      setFreeze(serverResult.next !== player.name)
-      setIsTurn(serverResult.next === player.name)
-      if (serverResult.player_win || serverResult.opponent_win) {
-        setFreeze(true)
-        setStarted(false)
-        if (serverResult.player_win && serverResult.opponent_win) {
-          setNotification({type: NotificationActionKind.TIE})
-        } else if (serverResult.player_win) {
-          setNotification({type: NotificationActionKind.WIN})
-        } else if (serverResult.opponent_win) {
-          setNotification({type: NotificationActionKind.LOSE})
-        }
-      }
-    }
-    if (serverResult && !rotating && !waitingForResults && !currentMove) checkAgainstServer()
-    if (timeline) {
-      // console.log('revert')
-      timeline.revert()
-    }
-  }, [rotating, serverResult, board, waitingForResults, currentMove, timeline])
-
   return (
-    <>
+    <div id="game" className={isLoading ? 'loading' : ''}>
       <div id="controls">
         <Toggle
           label="Rotation Drop"
@@ -218,7 +183,7 @@ function Game ({ player, opponent }: gameProps)  {
       </div>
 
       <div id='board'>
-        {board.map((row: string[], r: number) => row.map((str, c) => (
+        {displayBoard.map((row: string[], r: number) => row.map((str, c) => (
           <button
             id={`square-${r}-${c}`}
             key={`square-${r}-${c}`}
@@ -231,12 +196,13 @@ function Game ({ player, opponent }: gameProps)  {
             </div>
           </button>
         )))}
+        <div id="loading-overlay"><div className="spinner" /></div>
       </div>
 
       <div id="notifications">
           {notification?.msg}
       </div>
-    </>
+    </div>
   )
 }
 

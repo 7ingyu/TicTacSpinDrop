@@ -1,4 +1,4 @@
-import { playerDataShape } from "../types";
+import { playerDataShape } from "@/types";
 
 enum NotificationActionKind {
   GO = 'go',

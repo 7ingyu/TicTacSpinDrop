@@ -38,3 +38,17 @@ export interface publicGameData extends gameData {
   player: playerState
   opponent: publicPlayer
 }
+
+export interface movedData extends publicGameData {
+  row: number
+  col: number
+  rotate: boolean
+}
+
+export interface moveData {
+  game_id: string
+  player_id: string
+  row: number
+  col: number
+  rotate: boolean
+}
