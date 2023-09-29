@@ -22,7 +22,7 @@ const App = () => {
       // console.log('newGame')
       setGameData(data)
     }
-    const onOpponentDisconnect = (data: playerDataShape) => {
+    const onOpponentDisconnect = (_: playerDataShape) => {
       // console.log(data)
       setGameData(null)
     }

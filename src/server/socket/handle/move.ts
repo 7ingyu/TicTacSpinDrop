@@ -2,7 +2,7 @@ import { Socket } from "socket.io"
 import { checkBoard, rotateBoard } from "../../../utils"
 import { moveData } from "../../../types/socket"
 import { games } from "../state"
-import { boardShape } from "@/types"
+import { boardShape } from "../../../types"
 import { getPlayers, sendDataToPlayers } from "."
 
 interface MoveArgs extends moveData {

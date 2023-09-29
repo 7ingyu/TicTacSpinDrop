@@ -13,7 +13,7 @@ ViteExpress.config({
 //   res.send("Hello Vite + React + TypeScript!")
 // })
 
-const server = app.listen(3000, "0.0.0.0", () =>
+const server = app.listen(Number(process.env.PORT) || 3000, "0.0.0.0", () =>
   console.log("Server is listening...")
 );
 

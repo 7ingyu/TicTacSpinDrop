@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import { boardShape } from '.';
+import { boardShape } from './index';
 
 export interface joinData {
   name: string

@@ -4,8 +4,8 @@
   "version": "2.0.0",
   "scripts": {
     "dev": "nodemon src/server/main.ts -w src/server",
-    "start": "ts-node src/server/main.ts",
-    "build": "vite build"
+    "start": "node src/server/main.js",
+    "build": "vite build && tsc -b src/server"
   },
   "dependencies": {
     "express": "^4.18.2",
