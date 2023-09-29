@@ -37,7 +37,7 @@ const notificationReducer
     case NotificationActionKind.TRANSITION:
       return {...state, msg: ''}
     case NotificationActionKind.NEW:
-      return {...state, msg: `New game! It's ${action.next === state.player?.name
+      return {...state, msg: `New game! It's ${action.next === state.player?.symbol
         ? 'your turn!'
         : (state.opponent?.name || 'Opponent') + '\'s turn.'
       }`}

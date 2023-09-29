@@ -7,7 +7,7 @@ const clean = (gameData: privateGameData, player_id: string)
   const opponent = player_a.socket === player_id ? player_b : player_a
 
   const {socket: player_socket, ...cleanPlayer} = player
-  const {socket: opponent_socket, ...cleanOpponent} = player
+  const {socket: opponent_socket, ...cleanOpponent} = opponent
   const playerRes = {...data, player, opponent: cleanOpponent}
   const opponentRes = {...data, player: opponent, opponent: cleanPlayer}
 

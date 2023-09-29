@@ -13,7 +13,7 @@ const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
   // console.log('new-move', game_id, row, col, rotate, player_id)
   // Get saved data
   const gameData = games[game_id]
-  console.log('in-memory', gameData)
+  // console.log('in-memory', gameData)
   const { board, next } = gameData
   const [player, opponent] = getPlayers(gameData, player_id)
   const symbol = player.symbol
@@ -50,7 +50,7 @@ const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
   // Update game stat
   gameData.board = newBoard
   gameData.next = opponent.symbol
-  console.log('new-data', gameData)
+  // console.log('new-data', gameData)
 
   sendDataToPlayers('moved', {...gameData, row, col, rotate})
 }

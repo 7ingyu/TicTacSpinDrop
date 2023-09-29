@@ -1,10 +1,16 @@
 import { Socket } from 'socket.io'
-import { io } from '../../main'
 import { games } from '../state'
+import sendDataToPlayers from './sendDataToPlayers'
+import { privateGameData } from '../../../types'
 
 const reset = (socket: Socket) => {
+  // console.log('socket rooms', socket.rooms)
   const game_id = [...socket.rooms][1]
-  const game = games[game_id]
+  // console.log('game/room id', game_id)
+  const game: privateGameData = games[game_id]
+
+  if (!game) return
+
   game.board = [
     ['', '', ''],
     ['', '', ''],
@@ -12,7 +18,8 @@ const reset = (socket: Socket) => {
   ]
   game.player_a.moves = 0
   game.player_b.moves = 0
-  io.to(game_id).emit('new-game', game)
+
+  sendDataToPlayers('reset', game)
 }
 
 export default reset

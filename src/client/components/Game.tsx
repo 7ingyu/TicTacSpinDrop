@@ -10,6 +10,7 @@ import {
   notificationReducer
 } from '@/client/reducers/notifications';
 import { socket } from '@/client/socket';
+import { time } from 'console';
 
 interface gameProps extends publicGameData {
   playerId: string
@@ -26,7 +27,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
   const [ freeze, setFreeze ] = useState<boolean>(true)
   const [ isTurn, setIsTurn ] = useState<boolean>(first === player.symbol)
   const [ isLoading, setIsLoading ] = useState<boolean>(false)
-  const [ moved, setMoved ] = useState<publicGameData>({
+  const [ moved, setMoved ] = useState<publicGameData | moveData>({
     id, next: first, board, player, opponent
   })
 
@@ -35,6 +36,50 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
       state: NotificationState,
       action: NotificationActionShape
     ) => NotificationState>(notificationReducer, { player, opponent, msg: '' });
+
+  useEffect(() => {
+    // Start game
+    if (player.symbol === first) {
+      setNotification({type: NotificationActionKind.GO})
+      setIsTurn(true)
+      setFreeze(false)
+    } else {
+      setNotification({type: NotificationActionKind.WAIT})
+      setIsTurn(false)
+      setFreeze(true)
+    }
+
+    const onMoved = (data: movedData) => {
+      console.log('onMoved')
+      // If opponent just moved
+      if (data.next === player.symbol) {
+        setFreeze(true)
+        setIsTurn(true)
+      } else {
+        setIsTurn(false)
+      }
+      setRotate(data.rotate)
+      setMoved(data)
+      setIsLoading(false)
+    }
+    const onReset = (data: publicGameData) => {
+      console.log('resetting')
+      const { board, next } = data
+      setDisplayBoard(board)
+      setIsTurn(next === player.symbol)
+      setFreeze(next !== player.symbol)
+      setNotification({type: NotificationActionKind.NEW, next})
+      setMoved(data)
+    }
+
+    socket.on('moved', onMoved)
+    socket.on('reset', onReset)
+
+    return () => {
+      socket.off('moved', onMoved)
+      socket.off('reset', onReset)
+    }
+  }, [id])
 
   const handleClick = (row: number, col: number) => {
     const body: moveData = {
@@ -54,9 +99,6 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
 
   const endMove = () => {
     console.log('ending move')
-
-    // Straighten out drop rotation
-    timeline?.revert()
 
     // Check winnings and record score
     let win, lose = false
@@ -83,40 +125,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
   }
 
   useEffect(() => {
-    // Start game
-    if (player.symbol === first) {
-      setNotification({type: NotificationActionKind.GO})
-      setIsTurn(true)
-      setFreeze(false)
-    } else {
-      setNotification({type: NotificationActionKind.WAIT})
-      setIsTurn(false)
-      setFreeze(true)
-    }
-
-    const onMoved = (data: movedData) => {
-      console.log('onMoved')
-      // If opponent just moved
-      if (data.next === player.symbol) {
-        setFreeze(true)
-        setRotate(rotate)
-        setIsTurn(true)
-      } else {
-        setIsTurn(false)
-      }
-      setMoved(data)
-      setIsLoading(false)
-    }
-
-    socket.on('moved', onMoved)
-
-    return () => {
-      socket.off('moved', onMoved)
-    }
-  }, [id])
-
-  useEffect(() => {
-    if (moved.row && moved.col) {
+    if (typeof moved.row === 'number' && typeof moved.col === 'number') {
       setNotification({type: NotificationActionKind.TRANSITION})
       if (!moved.rotate) {
         // No rotation = no animation
@@ -124,6 +133,9 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
         endMove()
       } else {
         // trigger rotation
+        const tempBoard: boardShape = [...displayBoard]
+        tempBoard[moved.row][moved.col] = isTurn ? opponent.symbol : player.symbol
+        setDisplayBoard(tempBoard)
         setRotating(true)
       }
     }
@@ -157,12 +169,17 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
 
       // Trigger animation
       tl.play().then(() => {
-        setDisplayBoard(moved.board)
         endMove()
+        setDisplayBoard(moved.board)
         setTimeline(tl)
       })
     }
   }, [rotating])
+
+  useEffect(() => {
+    // Straighten out drop rotation
+    timeline?.revert()
+  }, [timeline])
 
   return (
     <div id="game" className={isLoading ? 'loading' : ''}>

@@ -1,7 +1,8 @@
+import { randomBytes } from 'crypto'
 import { handleQueue, sendDataToPlayers } from '.'
 import { io } from '../../main'
 import { x, o, queue, games, players } from '../state'
-import { joinData, playerData, privateGameData } from '../../../types/socket'
+import { joinData, playerData, privateGameData } from '../../../types'
 
 const join = ({ name, game = '', socket }: joinData) => {
 
@@ -14,12 +15,18 @@ const join = ({ name, game = '', socket }: joinData) => {
     const player_b = queue.pop()
     if (!player_b) throw 'No other players available'
     const socket_b = io.sockets.sockets.get(player_b?.socket || '')
-    if (!socket_b) throw 'Queued player has disconnected'
+    if (!socket_b) throw `Queued player ${player_b?.socket} has disconnected`
     const num_games = Object.keys(games).length
     if (num_games > 100) throw 'Too many games going'
 
     // Determine room/game ID
-    const game_id: string = game || socket.id
+    let game_id: string = game || randomBytes(10).toString("base64")
+    if (game_id === game && games[game_id]) {
+      throw 'Game already in session'
+    }
+    while (games[game_id]) {
+      game_id = randomBytes(10).toString("base64")
+    }
     const gameData: privateGameData = {
       id: game_id,
       next: x,
