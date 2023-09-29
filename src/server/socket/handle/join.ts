@@ -2,20 +2,24 @@ import { randomBytes } from 'crypto'
 import { handleQueue, sendDataToPlayers } from '.'
 import { io } from '../../main'
 import { x, o, queue, games, players } from '../state'
-import { joinData, playerData, privateGameData } from '../../../types'
+import type { JoinData, PlayerData, PrivateGameData } from '../../../types'
 
-const join = ({ name, game = '', socket }: joinData) => {
+const join = ({ name, game = '', socket }: JoinData) => {
 
-  // console.log(name, 'trying to join', game)
-  const player_a: playerData = { name, socket: socket.id }
+  console.log(socket.id, '-', name, 'trying to join', game)
+  const player_a: PlayerData = { name, socket: socket.id }
 
   try {
     // Error handling
     if (!queue.length) throw 'No other players available'
-    const player_b = queue.pop()
-    if (!player_b) throw 'No other players available'
-    const socket_b = io.sockets.sockets.get(player_b?.socket || '')
-    if (!socket_b) throw `Queued player ${player_b?.socket} has disconnected`
+    let player_b = queue.pop()
+    let socket_b = io.sockets.sockets.get(player_b?.socket || '')
+    while (queue.length && (!player_b || !socket_b)) {
+      player_b = queue.pop()
+      socket_b = io.sockets.sockets.get(player_b?.socket || '')
+      if (!!player_b && !socket_b) console.log `Queued player ${player_b?.socket} has disconnected`
+    }
+    if (!player_b && !queue.length) throw 'No other players available'
     const num_games = Object.keys(games).length
     if (num_games > 100) throw 'Too many games going'
 
@@ -27,7 +31,7 @@ const join = ({ name, game = '', socket }: joinData) => {
     while (games[game_id]) {
       game_id = randomBytes(10).toString("base64")
     }
-    const gameData: privateGameData = {
+    const gameData: PrivateGameData = {
       id: game_id,
       next: x,
       board: [
@@ -58,9 +62,10 @@ const join = ({ name, game = '', socket }: joinData) => {
     socket_b.join(game_id)
 
     // Emit data to both players
+    console.log(socket.id, '-', 'matched with', socket_b.id)
     sendDataToPlayers('new-game', gameData)
   } catch (e) {
-    // console.log(e)
+    console.log(socket.id, '-', e)
     handleQueue({ name, socket })
   }
 }

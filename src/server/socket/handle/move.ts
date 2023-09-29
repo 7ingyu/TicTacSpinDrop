@@ -1,34 +1,34 @@
 import { Socket } from "socket.io"
 import { checkBoard, rotateBoard } from "../../../utils"
-import { moveData } from "../../../types/socket"
 import { games } from "../state"
-import { boardShape } from "../../../types"
 import { getPlayers, sendDataToPlayers } from "."
+import type { GameBoard, MoveData } from "../../../types"
 
-interface MoveArgs extends moveData {
+interface MoveArgs extends MoveData {
   socket: Socket
 }
 
 const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
-  // console.log('new-move', game_id, row, col, rotate, player_id)
   // Get saved data
   const gameData = games[game_id]
   // console.log('in-memory', gameData)
   const { board, next } = gameData
   const [player, opponent] = getPlayers(gameData, player_id)
   const symbol = player.symbol
+  console.log(socket.id, `- new-move: game ${game_id} (row ${row} col ${col} rotate ${rotate} ${symbol})`)
 
   // Update move count
   player.moves ++
 
   // Update board
-  let newBoard: boardShape = [... board]
+  let newBoard: GameBoard = [... board]
   if (!newBoard[row][col] && Math.abs(player.moves - opponent.moves) < 2 || symbol !== next) {
     newBoard[row][col] = symbol
   } else {
     // Report invalid if already something at that square
     // Or if too many moves
     player.moves --
+    console.log(socket.id, '- invalid-move')
     socket.emit('invalid-move', { ...games[game_id] })
     return
   }

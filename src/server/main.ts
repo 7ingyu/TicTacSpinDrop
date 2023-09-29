@@ -1,9 +1,24 @@
-import express, { Express } from "express"
+import express, { type Express } from "express"
+import session from "express-session"
 import ViteExpress from "vite-express"
 import { Server } from 'socket.io'
 import setupSocket from './socket'
 
 const app: Express = express()
+
+// Session setup
+const sess = {
+  secret: process.env.SECRET || 'tea and jellyfish',
+  // resave: true,
+  // saveUninitialized: true,
+  cookie: { secure: false, maxAge: 60000 }
+}
+if (process.env.NODE_ENV == 'production') {
+  app.set('trust proxy', 1)
+  sess.cookie.secure = true
+}
+const sessionMiddleware = session(sess)
+app.use(sessionMiddleware)
 
 ViteExpress.config({
   mode: process.env.NODE_ENV == 'production' ? 'production' : 'development'
@@ -19,6 +34,7 @@ const server = app.listen(Number(process.env.PORT) || 3000, "0.0.0.0", () =>
 
 ViteExpress.bind(app, server);
 
+// Socket Setup
 export const io = new Server(server)
-
+io.engine.use(sessionMiddleware);
 io.on('connection', setupSocket)

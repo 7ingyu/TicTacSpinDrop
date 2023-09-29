@@ -1,4 +1,4 @@
-import { Socket } from 'socket.io'
+import type { Socket } from 'socket.io'
 import { handleJoin } from '.'
 import { io } from '../../main'
 import { games, players } from '../state'
@@ -9,12 +9,15 @@ const disconnect = (socket: Socket) => {
   if (!player_b) return
   const socket_b = io.sockets.sockets.get(player_b.socket)
   const game_id = [...socket.rooms][1]
+
   // Clean up state
   delete players[socket.id]
   delete players[player_b.socket]
   delete games[game_id]
+
   // Notify opponent of disconnect
-  // and add to que
+  // and add to queue
+  console.log(socket.id, `disconnected - reassigning ${player_b.socket}`)
   if (!socket_b) return
   socket_b.leave(game_id)
   socket_b.emit('opponent-disconnect')

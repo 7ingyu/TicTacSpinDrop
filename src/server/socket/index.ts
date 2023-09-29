@@ -1,8 +1,9 @@
-import { Socket } from 'socket.io'
+import type { SessionSocket } from '../../types'
 import { handleDisconnect, handleJoin, handleMove, handleReset } from './handle'
 
-const setup = (socket: Socket) => {
-  // console.log('connected', socket.id)
+const setup = (socket: SessionSocket) => {
+  console.log(socket.id, '- connected')
+  console.log('session id:', socket.request.session.id)
 
   socket.on('join', (data) => handleJoin({...data, socket}))
   // emits 'new-game' upon success

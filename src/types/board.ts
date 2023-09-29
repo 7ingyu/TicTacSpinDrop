@@ -1,4 +1,4 @@
-export type boardShape = [
+export type GameBoard = [
   [string, string, string],
   [string, string, string],
   [string, string, string]

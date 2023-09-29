@@ -1,51 +1,51 @@
-import { Socket } from 'socket.io';
-import { boardShape } from './index';
+import type { Socket } from 'socket.io';
+import type { GameBoard } from './index';
 
-export interface joinData {
+export interface JoinData {
   name: string
   socket: Socket
   game?: string
 }
 
-export interface playerData {
+export interface PlayerData {
   name: string
   socket: string
 }
 
-export interface playerState extends playerData {
+export interface PlayerState extends PlayerData {
   symbol: string
   wins: number
   moves: number
 }
 
-export type publicPlayer = Omit<playerState, 'socket'>
+export type PublicPlayer = Omit<PlayerState, 'socket'>
 
-export interface gameData {
+export interface GameData {
   row?: number
   col?: number
   rotate?: boolean
   id: string
   next: string
-  board: boardShape
+  board: GameBoard
 }
 
-export interface privateGameData extends gameData {
-  player_a: playerState
-  player_b: playerState
+export interface PrivateGameData extends GameData {
+  player_a: PlayerState
+  player_b: PlayerState
 }
 
-export interface publicGameData extends gameData {
-  player: playerState
-  opponent: publicPlayer
+export interface PublicGameData extends GameData {
+  player: PlayerState
+  opponent: PublicPlayer
 }
 
-export interface movedData extends publicGameData {
+export interface MovedData extends PublicGameData {
   row: number
   col: number
   rotate: boolean
 }
 
-export interface moveData {
+export interface MoveData {
   game_id: string
   player_id: string
   row: number

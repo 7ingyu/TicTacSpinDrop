@@ -1,4 +1,4 @@
-import { playerDataShape } from "@/types";
+import { PublicGameData } from "@/types";
 
 enum NotificationActionKind {
   GO = 'go',
@@ -15,7 +15,7 @@ export interface NotificationActionShape {
   next?: string | undefined
 }
 
-export interface NotificationState extends playerDataShape {
+export interface NotificationState extends Omit<PublicGameData, 'id' | 'next' | 'board'> {
   msg: string;
 }
 

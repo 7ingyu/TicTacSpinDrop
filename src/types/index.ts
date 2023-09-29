@@ -1,12 +1,15 @@
-export { type boardShape } from "./board";
-export { type playerDataShape } from "./playerData";
-export {
-  type joinData,
-  type playerData,
-  type playerState,
-  type publicPlayer,
-  type privateGameData,
-  type publicGameData,
-  type moveData,
-  type movedData
+export type { GameBoard } from "./board";
+export type {
+  JoinData,
+  PlayerData,
+  PlayerState,
+  PublicPlayer,
+  PrivateGameData,
+  PublicGameData,
+  MoveData,
+  MovedData
 } from './socket'
+export type {
+  SessionIncomingMessage,
+  SessionSocket
+} from './session'

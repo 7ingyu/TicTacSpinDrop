@@ -1,7 +1,7 @@
-import { privateGameData, publicGameData, movedData } from "../../../types"
+import type { PrivateGameData, PublicGameData, MovedData } from "../../../types"
 
-const clean = (gameData: privateGameData, player_id: string)
-: [publicGameData, publicGameData] | [movedData, movedData] => {
+const clean = (gameData: PrivateGameData, player_id: string)
+: [PublicGameData, PublicGameData] | [MovedData, MovedData] => {
   const { player_a, player_b, ...data } = gameData
   const player = player_a.socket === player_id ? player_a : player_b
   const opponent = player_a.socket === player_id ? player_b : player_a

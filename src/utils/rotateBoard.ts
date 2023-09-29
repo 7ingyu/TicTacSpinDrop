@@ -1,7 +1,7 @@
-import { boardShape } from '../types'
+import { GameBoard } from '../types'
 
 export interface rotateReturn {
-  newBoard: boardShape
+  newBoard: GameBoard
   drops: {
     row: number
     col: number
@@ -9,9 +9,9 @@ export interface rotateReturn {
   }[]
 }
 
-const rotateBoard = (board: boardShape) : rotateReturn => {
+const rotateBoard = (board: GameBoard) : rotateReturn => {
   // console.log('calculating rotate')
-  const newBoard: boardShape = [
+  const newBoard: GameBoard = [
     [ board[2][0], board[1][0], board[0][0] ],
     [ board[2][1], board[1][1], board[0][1] ],
     [ board[2][2], board[1][2], board[0][2] ]

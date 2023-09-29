@@ -1,13 +1,13 @@
-import { Socket } from 'socket.io'
+import type { Socket } from 'socket.io'
+import type { PrivateGameData } from '../../../types'
 import { games } from '../state'
 import sendDataToPlayers from './sendDataToPlayers'
-import { privateGameData } from '../../../types'
 
 const reset = (socket: Socket) => {
   // console.log('socket rooms', socket.rooms)
   const game_id = [...socket.rooms][1]
-  // console.log('game/room id', game_id)
-  const game: privateGameData = games[game_id]
+  console.log(socket.id, '- reset game/room id', game_id)
+  const game: PrivateGameData = games[game_id]
 
   if (!game) return
 

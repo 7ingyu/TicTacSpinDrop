@@ -2,7 +2,7 @@ import { useEffect, useState, useReducer } from 'react'
 import gsap from 'gsap';
 import { Toggle } from '@/client/components'
 import { rotateBoard } from '@/utils';
-import { publicGameData, movedData, boardShape, moveData } from '@/types'
+import type { PublicGameData, MovedData, GameBoard, MoveData } from '@/types'
 import {
   NotificationActionKind,
   NotificationState,
@@ -10,15 +10,14 @@ import {
   notificationReducer
 } from '@/client/reducers/notifications';
 import { socket } from '@/client/socket';
-import { time } from 'console';
 
-interface gameProps extends publicGameData {
+interface gameProps extends PublicGameData {
   playerId: string
 }
 
 function Game ({ id, next: first, board, player, opponent, playerId }: gameProps)  {
 
-  const [ displayBoard, setDisplayBoard ] = useState<boardShape>(board)
+  const [ displayBoard, setDisplayBoard ] = useState<GameBoard>(board)
   const [ rotate, setRotate ] = useState<boolean>(false)
   const [ rotating, setRotating ] = useState<boolean>(false)
   const [ timeline, setTimeline ] = useState<gsap.core.Timeline | null>(null)
@@ -27,7 +26,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
   const [ freeze, setFreeze ] = useState<boolean>(true)
   const [ isTurn, setIsTurn ] = useState<boolean>(first === player.symbol)
   const [ isLoading, setIsLoading ] = useState<boolean>(false)
-  const [ moved, setMoved ] = useState<publicGameData | moveData>({
+  const [ moved, setMoved ] = useState<PublicGameData | MoveData>({
     id, next: first, board, player, opponent
   })
 
@@ -49,7 +48,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
       setFreeze(true)
     }
 
-    const onMoved = (data: movedData) => {
+    const onMoved = (data: MovedData) => {
       // console.log('onMoved')
       // If opponent just moved
       if (data.next === player.symbol) {
@@ -62,7 +61,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
       setMoved(data)
       setIsLoading(false)
     }
-    const onReset = (data: publicGameData) => {
+    const onReset = (data: PublicGameData) => {
       // console.log('resetting')
       const { board, next } = data
       setDisplayBoard(board)
@@ -82,7 +81,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
   }, [id])
 
   const handleClick = (row: number, col: number) => {
-    const body: moveData = {
+    const body: MoveData = {
       row, col, rotate, game_id: id, player_id: playerId
     }
     socket.emit('move', body)
@@ -133,7 +132,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
         endMove()
       } else {
         // trigger rotation
-        const tempBoard: boardShape = [...displayBoard]
+        const tempBoard: GameBoard = [...displayBoard]
         tempBoard[moved.row][moved.col] = isTurn ? opponent.symbol : player.symbol
         setDisplayBoard(tempBoard)
         setRotating(true)
