@@ -5,6 +5,16 @@ Vanilla Deployment: [https://7ingyu.github.io/TicTacSpinDrop/](https://7ingyu.gi
 
 Socket.IO Deployment: TBD
 
+## Features
+* Spin-Drop mode toggle
+* Game reset functionality
+* Animated board
+* State score-keeping
+* Add muti-client synchronization through Socket.IO, so players can be on different computers
+
 ## Future Implementations
+* Chatbox
+* Custom game rooms
+* Audience mode
 * User Login
-* Score keeping
+* Persistent score-keeping
