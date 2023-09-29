@@ -2,7 +2,7 @@ import { Socket } from 'socket.io'
 import { handleDisconnect, handleJoin, handleMove, handleReset } from './handle'
 
 const setup = (socket: Socket) => {
-  console.log('connected', socket.id)
+  // console.log('connected', socket.id)
 
   socket.on('join', (data) => handleJoin({...data, socket}))
   // emits 'new-game' upon success

@@ -24,7 +24,7 @@ function Login ({ name, setName, handleSubmit }: LoginProps) {
     //   setLoading(false)
     // }
     const onConnect = () => {
-      console.log('reg success')
+      // console.log('reg success')
       handleSubmit()
       setLoading(false)
     }
@@ -41,7 +41,7 @@ function Login ({ name, setName, handleSubmit }: LoginProps) {
 
   const handleEnter = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    console.log('connecting...')
+    // console.log('connecting...')
     socket.connect()
     setLoading(true)
   }

@@ -12,23 +12,23 @@ const App = () => {
 
   useEffect(() => {
     const onConnect = () => {
-      console.log('socket connected')
+      // console.log('socket connected')
       if (!playerId) {
         setPlayerId(socket.id)
       }
       socket.emit('join', { name })
     }
     const onNewGame = (data: publicGameData) => {
-      console.log('newGame')
+      // console.log('newGame')
       setGameData(data)
     }
     const onOpponentDisconnect = (data: playerDataShape) => {
-      console.log(data)
+      // console.log(data)
       setGameData(null)
     }
     const onDisconnect = (reason: string) => {
-      console.log('disconnect:', reason)
-      console.log('app reset')
+      // console.log('disconnect:', reason)
+      // console.log('app reset')
       if (reason === "io server disconnect") {
         // the disconnection was initiated by the server, you need to reconnect manually
         setNameSaved(false)

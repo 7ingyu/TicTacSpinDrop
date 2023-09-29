@@ -60,7 +60,7 @@ const join = ({ name, game = '', socket }: joinData) => {
     // Emit data to both players
     sendDataToPlayers('new-game', gameData)
   } catch (e) {
-    console.log(e)
+    // console.log(e)
     handleQueue({ name, socket })
   }
 }

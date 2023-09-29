@@ -42,7 +42,7 @@ const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
   let win, lose = false
   if (player.moves >= 3 || opponent.moves >= 3) {
     [ win, lose ] = checkBoard(newBoard, symbol)
-    console.log('win-lose', win, lose)
+    // console.log('win-lose', win, lose)
     if (win) player.wins ++
     if (lose) opponent.wins ++
   }

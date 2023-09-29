@@ -1,4 +1,4 @@
-import { boardShape } from '@/types'
+import { boardShape } from '../types'
 
 export interface rotateReturn {
   newBoard: boardShape

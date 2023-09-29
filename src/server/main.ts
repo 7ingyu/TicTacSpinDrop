@@ -1,19 +1,23 @@
-import express, { Express, Response } from "express"
+import express, { Express } from "express"
 import ViteExpress from "vite-express"
-// import { createServer } from 'node:http'
 import { Server } from 'socket.io'
 import setupSocket from './socket'
 
 const app: Express = express()
-// const server = createServer(app)
 
-app.get("/hello", (_, res: Response) => {
-  res.send("Hello Vite + React + TypeScript!")
+ViteExpress.config({
+  mode: process.env.NODE_ENV == 'production' ? 'production' : 'development'
 })
 
-const server = ViteExpress.listen(app, 3000, () =>
-  console.log("Server is listening on port 3000...")
-)
+// app.get("/hello", (_, res: Response) => {
+//   res.send("Hello Vite + React + TypeScript!")
+// })
+
+const server = app.listen(3000, "0.0.0.0", () =>
+  console.log("Server is listening...")
+);
+
+ViteExpress.bind(app, server);
 
 export const io = new Server(server)
 

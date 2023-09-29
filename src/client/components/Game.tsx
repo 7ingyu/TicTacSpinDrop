@@ -50,7 +50,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
     }
 
     const onMoved = (data: movedData) => {
-      console.log('onMoved')
+      // console.log('onMoved')
       // If opponent just moved
       if (data.next === player.symbol) {
         setFreeze(true)
@@ -63,7 +63,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
       setIsLoading(false)
     }
     const onReset = (data: publicGameData) => {
-      console.log('resetting')
+      // console.log('resetting')
       const { board, next } = data
       setDisplayBoard(board)
       setIsTurn(next === player.symbol)
@@ -88,17 +88,17 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
     socket.emit('move', body)
     setIsLoading(true)
     setFreeze(true)
-    console.log(row, col, 'clicked')
+    // console.log(row, col, 'clicked')
   }
 
   const handleReset = () => {
-    console.log('reset req')
+    // console.log('reset req')
     socket.emit('reset')
     setFreeze(true)
   }
 
   const endMove = () => {
-    console.log('ending move')
+    // console.log('ending move')
 
     // Check winnings and record score
     let win, lose = false
@@ -144,7 +144,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
   useEffect(() => {
     // Animate Rotation
     if (rotating) {
-      console.log('animating rotate')
+      // console.log('animating rotate')
 
       // Create timeline
       const tl = gsap.timeline()
