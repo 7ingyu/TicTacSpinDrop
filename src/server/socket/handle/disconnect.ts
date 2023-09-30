@@ -1,27 +1,30 @@
-import type { Socket } from 'socket.io'
 import { handleJoin } from '.'
+import { SessionSocket } from '../../../types'
 import { io } from '../../main'
 import { games, players } from '../state'
 
-const disconnect = (socket: Socket) => {
-  // Disconnect opponent
-  const player_b = players[socket.id]
+const disconnect = async (socket: SessionSocket) => {
+  console.log(socket.request.session.id, 'disconnected')
+  // Check if socket disconnect cleared room
+  const room_a = await io.sockets.in(socket.request.session.id).fetchSockets()
+  if (room_a.length) return
+
+  // Get opponent
+  const player_b = players[socket.request.session.id]
   if (!player_b) return
-  const socket_b = io.sockets.sockets.get(player_b.socket)
-  const game_id = [...socket.rooms][1]
+
+  console.log(`reassigning ${player_b.session_id}`)
 
   // Clean up state
   delete players[socket.id]
-  delete players[player_b.socket]
-  delete games[game_id]
+  delete players[player_b.session_id]
+  delete games[player_b.game_id]
 
   // Notify opponent of disconnect
   // and add to queue
-  console.log(socket.id, `disconnected - reassigning ${player_b.socket}`)
-  if (!socket_b) return
-  socket_b.leave(game_id)
-  socket_b.emit('opponent-disconnect')
-  handleJoin({name: player_b.name, socket: socket_b})
+  io.sockets.to(player_b.session_id).emit('opponent-disconnect')
+  const room_b = await io.sockets.in(player_b.session_id).fetchSockets()
+  handleJoin({name: player_b.name, socket: player_b.session_id})
 }
 
 export default disconnect

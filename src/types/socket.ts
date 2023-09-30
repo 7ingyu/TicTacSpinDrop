@@ -1,15 +1,15 @@
-import type { Socket } from 'socket.io';
-import type { GameBoard } from './index';
+import type { SessionSocket, GameBoard } from './index'
 
 export interface JoinData {
   name: string
-  socket: Socket
+  socket: SessionSocket | string
   game?: string
 }
 
 export interface PlayerData {
   name: string
-  socket: string
+  session_id: string
+  game_id: string
 }
 
 export interface PlayerState extends PlayerData {
@@ -18,7 +18,7 @@ export interface PlayerState extends PlayerData {
   moves: number
 }
 
-export type PublicPlayer = Omit<PlayerState, 'socket'>
+export type PublicPlayer = Omit<PlayerState, 'session_id'>
 
 export interface GameData {
   row?: number

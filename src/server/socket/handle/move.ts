@@ -2,20 +2,20 @@ import { Socket } from "socket.io"
 import { checkBoard, rotateBoard } from "../../../utils"
 import { games } from "../state"
 import { getPlayers, sendDataToPlayers } from "."
-import type { GameBoard, MoveData } from "../../../types"
-
+import type { GameBoard, MoveData, SessionSocket } from "../../../types"
+import { io } from "../../main"
 interface MoveArgs extends MoveData {
-  socket: Socket
+  socket: SessionSocket
 }
 
-const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
+const move = ({ game_id, row, col, rotate, socket }: MoveArgs) => {
   // Get saved data
   const gameData = games[game_id]
   // console.log('in-memory', gameData)
   const { board, next } = gameData
-  const [player, opponent] = getPlayers(gameData, player_id)
+  const [player, opponent] = getPlayers(gameData, socket.request.session.id)
   const symbol = player.symbol
-  console.log(socket.id, `- new-move: game ${game_id} (row ${row} col ${col} rotate ${rotate} ${symbol})`)
+  console.log(socket.request.session.id, `- new-move: game ${game_id} (row ${row} col ${col} rotate ${rotate} ${symbol})`)
 
   // Update move count
   player.moves ++
@@ -29,7 +29,7 @@ const move = ({ game_id, row, col, rotate, player_id, socket }: MoveArgs) => {
     // Or if too many moves
     player.moves --
     console.log(socket.id, '- invalid-move')
-    socket.emit('invalid-move', { ...games[game_id] })
+    io.sockets.to(socket.request.session.id).emit('invalid-move', { ...games[game_id] })
     return
   }
 

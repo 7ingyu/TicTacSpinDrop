@@ -4,26 +4,30 @@ import { io } from '../../main'
 import { x, o, queue, games, players } from '../state'
 import type { JoinData, PlayerData, PrivateGameData } from '../../../types'
 
-const join = ({ name, game = '', socket }: JoinData) => {
+const join = async ({ name, game = '', socket }: JoinData) => {
 
-  console.log(socket.id, '-', name, 'trying to join', game)
-  const player_a: PlayerData = { name, socket: socket.id }
+  const session_id = typeof socket === "string" ? socket : socket.request.session.id
+
+  console.log(session_id, '-', name, 'trying to join', game)
+  const player_a: Omit<PlayerData, 'game_id'>
+    = { name, session_id }
 
   try {
     // Error handling
     if (!queue.length) throw 'No other players available'
     let player_b = queue.pop()
-    let socket_b = io.sockets.sockets.get(player_b?.socket || '')
-    while (queue.length && (!player_b || !socket_b)) {
+    console.log('popped', player_b)
+    let room_b = await io.sockets.in(player_b.session_id).fetchSockets()
+    while (queue.length && (!player_b || !room_b.length || player_b.session_id === session_id)) {
       player_b = queue.pop()
-      socket_b = io.sockets.sockets.get(player_b?.socket || '')
-      if (!!player_b && !socket_b) console.log `Queued player ${player_b?.socket} has disconnected`
+      room_b = player_b ? await io.sockets.in(player_b.session_id).fetchSockets() : []
+      if (!!player_b && !room_b.length) console.log `Queued player ${player_b?.session_id} has disconnected`
     }
     if (!player_b && !queue.length) throw 'No other players available'
     const num_games = Object.keys(games).length
     if (num_games > 100) throw 'Too many games going'
 
-    // Determine room/game ID
+    // Determine game ID
     let game_id: string = game || randomBytes(10).toString("base64")
     if (game_id === game && games[game_id]) {
       throw 'Game already in session'
@@ -44,28 +48,27 @@ const join = ({ name, game = '', socket }: JoinData) => {
         symbol: o,
         wins: 0,
         moves: 0,
+        game_id: game_id
       },
       player_b: {
         ...player_b,
         symbol: x,
         wins: 0,
-        moves: 0
+        moves: 0,
+        game_id: game_id
       }
     }
     // Connect players to each other
-    players[player_a.socket] = player_b
-    players[player_b.socket] = player_a
+    players[player_a.session_id] = {...player_b, game_id: game_id}
+    players[player_b.session_id] = {...player_a, game_id: game_id}
     // Save game state
     games[game_id] = gameData
-    // Join room
-    socket.join(game_id)
-    socket_b.join(game_id)
 
     // Emit data to both players
-    console.log(socket.id, '-', 'matched with', socket_b.id)
+    console.log(`game ${game_id}`, player_a.session_id, '-', 'matched with', player_b.session_id)
     sendDataToPlayers('new-game', gameData)
   } catch (e) {
-    console.log(socket.id, '-', e)
+    console.log('session', session_id, '-', e)
     handleQueue({ name, socket })
   }
 }

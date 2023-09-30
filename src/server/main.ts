@@ -9,8 +9,8 @@ const app: Express = express()
 // Session setup
 const sess = {
   secret: process.env.SECRET || 'tea and jellyfish',
-  // resave: true,
-  // saveUninitialized: true,
+  resave: true,
+  saveUninitialized: true,
   cookie: { secure: false, maxAge: 60000 }
 }
 if (process.env.NODE_ENV == 'production') {
