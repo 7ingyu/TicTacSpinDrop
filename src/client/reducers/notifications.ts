@@ -41,8 +41,6 @@ const notificationReducer
         ? 'your turn!'
         : (state.opponent?.name || 'Opponent') + '\'s turn.'
       }`}
-    default:
-      return state
   }
 }
 

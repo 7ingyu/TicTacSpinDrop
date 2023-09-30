@@ -22,13 +22,13 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
   const [ rotating, setRotating ] = useState<boolean>(false)
   const [ timeline, setTimeline ] = useState<gsap.core.Timeline | null>(null)
   const [ score, setScore ] = useState<number[]>([player.wins, opponent.wins])
-  const [ started, setStarted ] = useState<boolean>(false)
   const [ freeze, setFreeze ] = useState<boolean>(true)
   const [ isTurn, setIsTurn ] = useState<boolean>(first === player.symbol)
   const [ isLoading, setIsLoading ] = useState<boolean>(false)
-  const [ moved, setMoved ] = useState<PublicGameData | MoveData>({
+  const [ moved, setMoved ] = useState<PublicGameData | MovedData>({
     id, next: first, board, player, opponent
   })
+  const [ gameOver, setGameOver ] = useState<boolean>(false)
 
   const [ notification, setNotification ]
     = useReducer<(
@@ -104,22 +104,28 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
     const [ currentPlayerScore, currentOppScore ] = score
     if (moved.player.wins > currentPlayerScore) win = true
     if (moved.opponent.wins > currentOppScore) lose = true
+    // console.log('moved', moved.player.wins, moved.opponent.wins)
+    // console.log('state', win, lose)
     if (win && lose) {
+      // console.log('tie')
       setNotification({type: NotificationActionKind.TIE})
     } else if (win) {
+      // console.log('win')
       setNotification({type: NotificationActionKind.WIN})
     } else if (lose) {
+      // console.log('lose')
       setNotification({type: NotificationActionKind.LOSE})
     }
     setScore([moved.player.wins, moved.opponent.wins])
 
     // Freeze if game over
+    // console.log('set Freeze', win || lose ? true : !isTurn)
     setFreeze(win || lose ? true : !isTurn)
+    setGameOver(win || lose)
 
     // Setup for next move
     setTimeline(null)
-    setNotification({type: isTurn ? NotificationActionKind.GO : NotificationActionKind.WAIT})
-    setStarted(true)
+    if (!win && !lose) setNotification({type: isTurn ? NotificationActionKind.GO : NotificationActionKind.WAIT})
     setRotating(false)
   }
 
@@ -189,7 +195,7 @@ function Game ({ id, next: first, board, player, opponent, playerId }: gameProps
           setToggle={setRotate}
         />
         <button className="buttons" onClick={handleReset}>
-          {started ? 'Reset Game' : 'New Game'}
+          {!gameOver ? 'Reset Game' : 'New Game'}
         </button>
       </div>
 

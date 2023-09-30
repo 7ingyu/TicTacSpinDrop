@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Login, Game } from '@/client/components'
-import { playerDataShape, publicGameData } from '@/types'
+import { PlayerData, PublicGameData } from '@/types'
 import { socket } from '@/client/socket';
 
 const App = () => {
@@ -8,21 +8,21 @@ const App = () => {
   const [ name, setName ] = useState<string>('')
   const [ nameSaved, setNameSaved ] = useState<boolean>(false)
   const [ playerId, setPlayerId ] = useState<string>('')
-  const [ gameData, setGameData ] = useState<publicGameData | null>(null)
+  const [ gameData, setGameData ] = useState<PublicGameData | null>(null)
 
   useEffect(() => {
     const onConnect = () => {
       // console.log('socket connected')
       if (!playerId) {
         setPlayerId(socket.id)
+        socket.emit('join', { name })
       }
-      socket.emit('join', { name })
     }
-    const onNewGame = (data: publicGameData) => {
+    const onNewGame = (data: PublicGameData) => {
       // console.log('newGame')
       setGameData(data)
     }
-    const onOpponentDisconnect = (_: playerDataShape) => {
+    const onOpponentDisconnect = (_: PlayerData) => {
       // console.log(data)
       setGameData(null)
     }
