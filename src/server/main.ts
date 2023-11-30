@@ -14,6 +14,7 @@ const sess = {
   cookie: { secure: false, maxAge: 60000 }
 }
 if (process.env.NODE_ENV == 'production') {
+  console.log('in production environment')
   app.set('trust proxy', 1)
   sess.cookie.secure = true
 }
