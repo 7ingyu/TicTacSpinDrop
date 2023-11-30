@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "scripts": {
     "dev": "nodemon src/server/main.ts -w src/server",
-    "start": "node src/server/main.js",
+    "start": "node prod/server/main.js",
     "build": "vite build && tsc -b src/server"
   },
   "dependencies": {
