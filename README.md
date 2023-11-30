@@ -13,6 +13,7 @@ Socket.IO Deployment: TBD
 * Add muti-client synchronization through Socket.IO, so players can be on different computers
 
 ## Future Implementations
+* Better handling of player drop
 * Chatbox
 * Custom game rooms
 * Audience mode
